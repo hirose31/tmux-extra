@@ -15,17 +15,43 @@
 trim() { echo $1; }
 
 if [[ -z "$1" ]]; then
-    echo "Specify session name as the first argument"
-    exit
+    # N of not attched sessions:
+    #   0:
+    #     N of all sessions:
+    #       0: -> exec tmux (create new session)
+    #       1: -> share session
+    #       other: -> exit (need to specify session name)
+    #   1: -> exec tmux attach (firstly attach)
+    #   other: -> -> exit (need to specify session name)
+    not_attached_session_nb=$(trim $(tmux ls | grep -v 'attached' | wc -l))
+    if [[ "$not_attached_session_nb" == "0" ]]; then
+        session_nb=$(trim $(tmux ls | wc -l))
+        if [[ "$session_nb" == "0" ]]; then
+            exec tmux
+        elif [[ "$session_nb" == "1" ]]; then
+            base_session=$(trim $(tmux ls -F '#{session_name}'))
+        else
+            echo "Specify session name as the first argument"
+            tmux ls
+            exit
+        fi
+    elif [[ "$not_attached_session_nb" == "1" ]]; then
+        exec tmux attach
+    else
+        echo "Specify session name as the first argument"
+        tmux ls
+        exit
+    fi
+else
+    # Only because I often issue `ls` to this script by accident
+    if [[ "$1" == "ls" ]]; then
+        tmux ls
+        exit
+    else
+        base_session="$1"
+    fi
 fi
 
-# Only because I often issue `ls` to this script by accident
-if [[ "$1" == "ls" ]]; then
-    tmux ls
-    exit
-fi
-
-base_session="$1"
 # This actually works without the trim() on all systems except OSX
 tmux_nb=$(trim `tmux ls | grep "^$base_session" | wc -l`)
 if [[ "$tmux_nb" == "0" ]]; then
