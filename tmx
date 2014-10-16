@@ -37,6 +37,18 @@ if [[ -z "$1" ]]; then
         fi
     elif [[ "$not_attached_session_nb" == "1" ]]; then
         exec tmux attach
+    elif [[ "$not_attached_session_nb" == "2" ]]; then
+        # 0: 11 windows (created ...
+        # 20141015203559: 11 windows (created ...
+        sid=($(tmux ls -F '#{session_name}'))
+        if [[ ${sid[0]} == '0' && ${sid[1]} =~ 20[0-9]{12} ]]; then
+            tmux kill-session -t "${sid[1]}"
+            base_session=${sid[0]}
+        else
+            echo "Specify session name as the first argument"
+            tmux ls
+            exit
+        fi
     else
         echo "Specify session name as the first argument"
         tmux ls
@@ -79,3 +91,11 @@ else
     fi
 fi 
 
+# Local Variables:
+# mode: sh
+# sh-basic-offset: 4
+# sh-indentation: 4
+# tab-width: 4
+# indent-tabs-mode: nil
+# coding: utf-8
+# End:
